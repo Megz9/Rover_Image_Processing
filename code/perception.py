@@ -60,3 +60,6 @@ def perception_step(Rover):
 
     # 2) Apply perspective transform
     warped,mask = perspect_transform(image, source, destination)
+    threshed = color_thresh(warped)
+    obs_map=np.absolute(np.float32(threshed)-1)*mask
+    rock_map= find_rocks(warped)
