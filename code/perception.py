@@ -38,7 +38,28 @@ def perspect_transform(img, src, dst):
     warped = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))# keep same size as input image
     mask = cv2.warpPerspective(np.ones_like(img[:,:,0]), M, (img.shape[1], img.shape[0]))#
     return warped, mask
-    
+
+# Define a function to convert from image coords to rover coords
+def rover_coords(binary_img):
+    # Identify nonzero pixels
+    ypos, xpos = binary_img.nonzero()
+    # Calculate pixel positions with reference to the rover position being at the 
+    # center bottom of the image.  
+    x_pixel = -(ypos - binary_img.shape[0]).astype(np.float)
+    y_pixel = -(xpos - binary_img.shape[1]/2 ).astype(np.float)
+    return x_pixel, y_pixel
+
+
+# Define a function to convert to radial coords in rover space
+def to_polar_coords(x_pixel, y_pixel):
+    # Convert (x_pixel, y_pixel) to (distance, angle) 
+    # in polar coordinates in rover space
+    # Calculate distance to each pixel
+    dist = np.sqrt(x_pixel**2 + y_pixel**2)
+    # Calculate angle away from vertical for each pixel
+    angles = np.arctan2(y_pixel, x_pixel)
+    return dist, angles
+
 def perception_step(Rover):
     # Perform perception steps to update Rover()
     # TODO:
@@ -60,6 +81,18 @@ def perception_step(Rover):
 
     # 2) Apply perspective transform
     warped,mask = perspect_transform(image, source, destination)
+
+    # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
     threshed = color_thresh(warped)
     obs_map=np.absolute(np.float32(threshed)-1)*mask
     rock_map= find_rocks(warped)
+    
+    # 4) Update Rover.vision_image (this will be displayed on left side of screen)
+    Rover.vision_image[:,:,0] = obs_map*255
+        #          Rover.vision_image[:,:,1] = rock_sample color-thresholded binary image
+    Rover.vision_image[:,:,2] = threshed*255
+
+    # 5) Convert map image pixel values to rover-centric coords
+    xpix, ypix = rover_coords(threshed)
+    obs_xpix,obs_ypix =rover_coords(obs_map)
+    rock_xpix,rock_ypix=rover_coords(rock_map)
