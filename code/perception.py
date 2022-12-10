@@ -31,3 +31,32 @@ def find_rocks(img,levels=(110,110,50)):
     color_select[above_thresh] = 1
     # Return the binary image
     return color_select
+# Define a function to perform a perspective transform
+def perspect_transform(img, src, dst):
+           
+    M = cv2.getPerspectiveTransform(src, dst)
+    warped = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))# keep same size as input image
+    mask = cv2.warpPerspective(np.ones_like(img[:,:,0]), M, (img.shape[1], img.shape[0]))#
+    return warped, mask
+    
+def perception_step(Rover):
+    # Perform perception steps to update Rover()
+    # TODO:
+    # NOTE: camera image is coming to you in Rover.img
+    # 1) Define source and destination points for perspective transform
+    image = Rover.img
+    dst = 10
+    bottom_offset = 5
+    source = np.float32([[14, 140],
+                         [300, 140],
+                         [200, 95],
+                         [120, 95]])
+
+    destination = np.float32([[image.shape[1] / 2 - dst, image.shape[0] - bottom_offset],
+                              [image.shape[1] / 2 + dst, image.shape[0] - bottom_offset],
+                              [image.shape[1] / 2 + dst, image.shape[0] - 2*dst - bottom_offset],
+                              [image.shape[1] / 2 - dst, image.shape[0] - 2*dst - bottom_offset]])
+
+
+    # 2) Apply perspective transform
+    warped,mask = perspect_transform(image, source, destination)
