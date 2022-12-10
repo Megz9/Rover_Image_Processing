@@ -22,6 +22,36 @@ def color_thresh(img, rgb_thresh=(160, 160, 160)):
     color_select[above_thresh] = 1
     # Return the binary image
     return color_select
+# Define a function to map rover space pixels to world space
+def rotate_pix(xpix, ypix, yaw):
+    # Convert yaw to radians
+    yaw_rad = yaw * np.pi / 180
+    xpix_rotated = (xpix * np.cos(yaw_rad)) - (ypix * np.sin(yaw_rad))
+                            
+    ypix_rotated = (xpix * np.sin(yaw_rad)) + (ypix * np.cos(yaw_rad))
+    # Return the result  
+    return xpix_rotated, ypix_rotated
+
+def translate_pix(xpix_rot, ypix_rot, xpos, ypos, scale): 
+    # Apply a scaling and a translation
+    xpix_translated = (xpix_rot / scale) + xpos
+    ypix_translated = (ypix_rot / scale) + ypos
+    # Return the result  
+    return xpix_translated, ypix_translated
+
+
+# Define a function to apply rotation and translation (and clipping)
+# Once you define the two functions above this function should work
+def pix_to_world(xpix, ypix, xpos, ypos, yaw, world_size, scale):
+    # Apply rotation
+    xpix_rot, ypix_rot = rotate_pix(xpix, ypix, yaw)
+    # Apply translation
+    xpix_tran, ypix_tran = translate_pix(xpix_rot, ypix_rot, xpos, ypos, scale)
+    # Perform rotation, translation and clipping all at once
+    x_pix_world = np.clip(np.int_(xpix_tran), 0, world_size - 1)
+    y_pix_world = np.clip(np.int_(ypix_tran), 0, world_size - 1)
+    # Return the result
+    return x_pix_world, y_pix_world
 def find_rocks(img,levels=(110,110,50)):
     above_thresh = (img[:,:,0] > levels[0]) \
     & (img[:,:,1] > levels[1]) \
@@ -96,3 +126,12 @@ def perception_step(Rover):
     xpix, ypix = rover_coords(threshed)
     obs_xpix,obs_ypix =rover_coords(obs_map)
     rock_xpix,rock_ypix=rover_coords(rock_map)
+    
+    # 6) Convert rover-centric pixel values to world coordinates
+    xpos,ypos=Rover.pos
+    yaw=Rover.yaw
+    world_size=Rover.worldmap.shape[0]
+    scale=2*dst
+    x_world,y_world = pix_to_world(xpix, ypix, xpos, ypos, yaw, world_size, scale)
+    obstacle_x_world ,obstacle_y_world = pix_to_world(obs_xpix,obs_ypix,xpos, ypos, yaw, world_size, scale)
+    rock_x_world,rock_y_world = pix_to_world(rock_xpix,rock_ypix,xpos, ypos, yaw, world_size, scale)
