@@ -166,7 +166,9 @@ def perception_step(Rover):
         Rover.vision_image[:,:,1] = 0
         Rover.nav_distrock=None
         
-        
+    obsDist, obsAngles = to_polar_coords(obsx, obsy)
+    Rover.obs_angles=obsAngles
+    Rover.obs_dist=obsDist     
         
     
     return Rover

@@ -15,8 +15,31 @@ def decision_step(Rover):
         # Check for Rover.mode status
         if Rover.mode == 'forward': 
             # Check the extent of navigable terrain
-            Rover.picking = False
-            if len(Rover.nav_angles) >= Rover.stop_forward:  
+            if Rover.vel <= 0.1 and Rover.total_time - Rover.stuck_time > 4:
+                # Set mode to "stuck" and hit the brakes!
+                Rover.throttle = 0
+                # Set brake to stored brake value
+                Rover.brake = Rover.brake_set
+                Rover.steer = 0
+                Rover.stuck=True
+                Rover.mode="stuck"
+                Rover.stuck_time = Rover.total_time
+            else:
+                Rover.stuck=False
+            print("Rover.stuck_count in forward: ",Rover.stuck_count)
+            if(Rover.stuck_pos is not None):
+                distanceMoved=np.sqrt( (Rover.stuck_pos[0]-Rover.pos[0])**2 + (Rover.stuck_pos[1]-Rover.pos[1])**2 )
+                if(Rover.stuck==True and (distanceMoved <2)): #accepted range 
+                    Rover.stuck_count+=1
+                elif(Rover.stuck==True):#stuck again but not in same position
+                    Rover.stuck_count=0
+            # Check the extent of navigable terrain
+           
+            
+            if len(Rover.nav_angles)>=25000:               
+                Rover.steer = np.clip(np.max(Rover.nav_angles * 180/np.pi), 40, 80)
+
+            elif len(Rover.nav_angles) >= Rover.stop_forward:  
                 # If mode is forward, navigable terrain looks good 
                 # and velocity is below max, then throttle 
                 if Rover.vel < Rover.max_vel:
@@ -44,6 +67,24 @@ def decision_step(Rover):
 
         # If we're already in "stop" mode then make different decisions
         elif Rover.mode == 'stop':
+            if(Rover.vel<= 0.1 and Rover.total_time-Rover.stuck_time >15 and Rover.picking==False):
+                throttle=0
+                Rover.brake=Rover.brake_set
+                Rover.stuck_time=Rover.total_time
+                Rover.stuck=True
+                Rover.mode="stuck"
+            else:
+                Rover.stuck=False
+            print("Rover.stuck_count in stop",Rover.stuck_count)
+            if(Rover.stuck_pos is not None):
+                distanceMoved=np.sqrt( (Rover.stuck_pos[0]-Rover.pos[0])**2 + (Rover.stuck_pos[1]-Rover.pos[1])**2 )
+
+                if(Rover.stuck==True and (distanceMoved <2)): #accepted range 
+                    Rover.stuck_count += 1
+                elif(Rover.stuck==True):#stuck again but not in same position
+                    Rover.stuck_count=0
+
+            
             # If we're in stop mode but still moving keep braking
             if Rover.vel > 0.2:
                 Rover.throttle = 0
@@ -60,17 +101,46 @@ def decision_step(Rover):
                     Rover.steer = -15 # Could be more clever here about which way to turn
 
                 if ((len(Rover.nav_angles) >= Rover.go_forward) and not Rover.near_sample):
-                    if(np.mean(Rover.nav_angles)<=0.6 and np.mean(Rover.nav_angles)>=-0.6):
+                    if(np.mean(Rover.nav_angles)<=0.5 and np.mean(Rover.nav_angles)>=-0.5):
                         # Set throttle back to stored valu
                          Rover.throttle = Rover.throttle_set
-                    # Release the brake
+                        # Release the brake
                         Rover.brake = 0
-                    # Set steer to mean angle
+                        # Set steer to mean angle
                         Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
                         Rover.mode = 'forward'
                     else:
                         Rover.steer = -10
-                    
+
+        elif Rover.mode =="stuck":
+
+            #in case of staying stuck several times
+            if(Rover.stuck_count == 0):
+                Rover.stuck_pos=Rover.pos
+            #(np.mean(Rover.nav_angles)>=0.5 or np.mean(Rover.nav_angles)<=-0.5) the navigable train is not in the middle
+            if(Rover.stuck_count>5):
+                Rover.mode="backward"
+            elif (Rover.stuck_count>1 or (np.mean(Rover.nav_angles)>=0.5 or np.mean(Rover.nav_angles)<=-0.5)):
+ 
+                Rover.throttle = 0
+                Rover.brake = 0
+
+                Rover.steer = -15
+            
+      
+            #general case
+            if(np.mean(Rover.nav_angles)>=0.5 or np.mean(Rover.nav_angles)<=-0.5):
+                Rover.throttle = 0
+                Rover.brake = 0
+                Rover.steer = -10
+            # Now we're stopped and we have vision data to see if there's a path forward
+            else:
+                Rover.throttle = Rover.throttle_set
+                # Release the brake to allow turning
+                Rover.brake = 0
+
+                Rover.mode="forward" # returns to previous mode
+            
         elif Rover.mode == 'rockFound':
             Rover.steer = np.clip(np.mean(Rover.nav_anglesrock * 180/np.pi), -50, 50)
             print("found rock")

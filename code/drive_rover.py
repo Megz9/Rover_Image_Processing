@@ -40,6 +40,7 @@ class RoverState():
     def __init__(self):
         self.start_time = None # To record the start time of navigation
         self.total_time = None # To record total duration of naviagation
+        self.stuck_time = 0 # To record total duration of naviagation
         self.img = None # Current camera image
         self.pos = None # Current position (x, y)
         self.yaw = None # Current yaw angle
@@ -78,6 +79,11 @@ class RoverState():
         self.picking_up = 0 # Will be set to telemetry value data["picking_up"]
         self.send_pickup = False # Set to True to trigger rock pickup
         self.picking = None #flag to know if the rover is picking a rock
+        self.stuck=None #flag to know if the rover was stuck
+        self.stuck_count=0 #counter to check if entered stuck from same position more than once
+        self.stuck_pos=None #to know the stuck position of the rover to increment counter if stuck again
+        self.obs_angle = None
+        self.obs_dist = None
         self.nav_anglesrock = None
         self.nav_distrock = None
 # Initialize our rover 
