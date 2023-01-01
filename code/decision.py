@@ -30,15 +30,6 @@ def decision_step(Rover):
                 if(np.min(Rover.nav_distrock) !=None):
                     Rover.mode = 'rockFound'
                     
-#                     Rover.steer = np.clip(np.mean(Rover.nav_anglesrock * 180/np.pi+0.8 * np.std(Rover.nav_anglesrock)), -15, 15)
-#                     print("found rock")
-#                     if(np.min(Rover.nav_distrock)<20):
-#                         Rover.throttle = 0
-#                         # Set brake to stored brake value
-#                         Rover.brake = Rover.brake_set
-#                         Rover.steer = 0
-#                         Rover.mode = 'stop'
-                        
                 else:
                 # Set steering to average angle clipped to the range +/- 15
                     Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
@@ -67,18 +58,19 @@ def decision_step(Rover):
                     Rover.brake = 0
                     # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
                     if (Rover.picking == False):
-                        Rover.steer = -15 # Could be more clever here about which way to turn
-                # If we're stopped but see sufficient navigable terrain in front then go!
-                if( Rover.vel==0 and not Rover.near_sample):
-                    Rover.mode='forward'
+                        Rover.steer = -10 # Could be more clever here about which way to turn
+
                 if ((len(Rover.nav_angles) >= Rover.go_forward) and not Rover.near_sample):
+                    if(np.mean(Rover.nav_angles)<=0.6 and np.mean(Rover.nav_angles)>=-0.6):
                         # Set throttle back to stored valu
-                    Rover.throttle = Rover.throttle_set
+                         Rover.throttle = Rover.throttle_set
                     # Release the brake
-                    Rover.brake = 0
+                        Rover.brake = 0
                     # Set steer to mean angle
-                    Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
-                    Rover.mode = 'forward'
+                        Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
+                        Rover.mode = 'forward'
+                    else:
+                        Rover.steer = -10   
                 if ((len(Rover.nav_angles) < Rover.go_forward) and not Rover.near_sample and Rover.picking== True):
                     Rover.mode = 'backward'
                     
