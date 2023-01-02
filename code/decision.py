@@ -57,8 +57,7 @@ def decision_step(Rover):
                     # Release the brake to allow turning
                     Rover.brake = 0
                     # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
-                    if (Rover.picking == False):
-                        Rover.steer = -10 # Could be more clever here about which way to turn
+                    Rover.steer = -15 # Could be more clever here about which way to turn
 
                 if ((len(Rover.nav_angles) >= Rover.go_forward) and not Rover.near_sample):
                     if(np.mean(Rover.nav_angles)<=0.6 and np.mean(Rover.nav_angles)>=-0.6):
@@ -70,26 +69,42 @@ def decision_step(Rover):
                         Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
                         Rover.mode = 'forward'
                     else:
-                        Rover.steer = -10   
-                if ((len(Rover.nav_angles) < Rover.go_forward) and not Rover.near_sample and Rover.picking== True):
-                    Rover.mode = 'backward'
+                        Rover.steer = -10
                     
         elif Rover.mode == 'rockFound':
             Rover.steer = np.clip(np.mean(Rover.nav_anglesrock * 180/np.pi), -50, 50)
             print("found rock")
-            if(np.min(Rover.nav_distrock)!=None and np.min(Rover.nav_distrock)<20):
+            if(np.min(Rover.nav_distrock)!=None and np.min(Rover.nav_distrock)<25):
                 Rover.throttle = 0
                 # Set brake to stored brake value
                 Rover.brake = Rover.brake_set
                 Rover.steer = 0
                 Rover.picking=True
-                Rover.mode = 'stop'
+                Rover.mode = 'collectingRock'
+            elif(np.min(Rover.nav_distrock) is None and (len(Rover.nav_angles) < Rover.go_forward)):
+                Rover.mode='backward'
+            elif(np.mean(Rover.nav_angles)>=0.5):
+                Rover.steer=-10
+                Rover.mode='forward'
+            elif(np.mean(Rover.nav_angles)<=-0.5):
+                Rover.steer= +10
+                Rover.mode='forward'
+            else:
+                Rover.mode='forward'
+                
+        elif Rover.mode == 'collectingRock':
+            if ((len(Rover.nav_angles) < Rover.go_forward) and not Rover.near_sample and Rover.picking== True):
+                Rover.mode = 'backward'
+            elif((len(Rover.nav_angles) >= Rover.go_forward)):
+                Rover.picking = False
+                Rover.mode = 'forward'
+                
         elif Rover.mode == 'backward':
-            print("we are in backward")
             Rover.throttle = -0.1
+            Rover.brake=0
             Rover.picking = False
-            if(Rover.vel < -0.6):
-                Rover.mode = 'stop'                
+            if(Rover.vel < -0.2):
+                Rover.mode = 'stop'
 
     # Just to make the rover do something 
     # even if no modifications have been made to the code
