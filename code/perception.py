@@ -117,10 +117,15 @@ def perception_step(Rover):
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
     threshed = color_thresh(warped)
     obs_map=np.absolute(np.float32(threshed)-1)*mask
+    bottom_offset = 60
+    threshed_goodfidlity = threshed
+    obs_map_goodfility = obs_map
+    threshed_goodfidlity[0:bottom_offset, :] = threshed[0:bottom_offset, :] * 0
+    obs_map_goodfility[0:bottom_offset, :] = obs_map[0:bottom_offset, :] * 0
     # 4) Update Rover.vision_image (this will be displayed on left side of screen)
-    Rover.vision_image[:,:,0] = obs_map*255
+    Rover.vision_image[:,:,2] = threshed_goodfidlity*255
     #Rover.vision_image[:,:,1] = rock_sample color-thresholded binary image
-    Rover.vision_image[:,:,2] = threshed*255
+    Rover.vision_image[:,:,0] = obs_map_goodfility*255
 
     # 5) Convert map image pixel values to rover-centric coords
     xpix, ypix = rover_coords(threshed)
@@ -132,11 +137,17 @@ def perception_step(Rover):
     scale=2* dst
     x_world,y_world = pix_to_world(xpix, ypix, xpos, ypos, yaw, world_size, scale)
     obsx_world,obsy_world = pix_to_world(obsx, obsy, xpos, ypos, yaw, world_size, scale)
-    
-    # 7) Update Rover worldmap (to be displayed on right side of screen)
-    Rover.worldmap[obsy_world, obsx_world, 0] += 1
-    #          Rover.fworldmap[rock_y_world, rock_x_world, 1] += 1
-    Rover.worldmap[y_world, x_world, 2] += 10
+    ###good fidlity
+    xpix_goodfidlity, ypix_goodfidlity = rover_coords(threshed_goodfidlity)
+    obsx_goodfidlity, obsy_goodfility = rover_coords(obs_map_goodfility)
+    x_world_goodfidlity,y_world_goodfidlity = pix_to_world(xpix_goodfidlity, ypix_goodfidlity, xpos, ypos, yaw, world_size, scale)
+    obsx_world_goodfidlity,obsy_world_goodfidlity = pix_to_world(obsx_goodfidlity, obsy_goodfility, xpos, ypos, yaw, world_size, scale)
+    if ((Rover.roll > 359.5) or (Rover.roll < 0.5)) and ((Rover.pitch > 359.5) or (Rover.pitch < 0.5)):
+
+        # 7) Update Rover worldmap (to be displayed on right side of screen)
+        Rover.worldmap[obsy_world_goodfidlity, obsx_world_goodfidlity, 0] = 255
+        #          Rover.fworldmap[rock_y_world, rock_x_world, 1] += 1
+        Rover.worldmap[y_world_goodfidlity, x_world_goodfidlity, 2] = 255
     
     # 8) Convert rover-centric pixel positions to polar coordinates
     dist, angles = to_polar_coords(xpix, ypix)
@@ -165,10 +176,10 @@ def perception_step(Rover):
     else:
         Rover.vision_image[:,:,1] = 0
         Rover.nav_distrock=None
-        
+
+    
     obsDist, obsAngles = to_polar_coords(obsx, obsy)
     Rover.obs_angles=obsAngles
-    Rover.obs_dist=obsDist     
-        
+    Rover.obs_dist=obsDist   
     
     return Rover
