@@ -51,7 +51,7 @@ def decision_step(Rover):
             
             # Check the extent of navigable terrain
             
-            if len(Rover.nav_angles)>=12000:               
+            if len(Rover.nav_angles)>=12000 and Rover.total_time>10:               
                 Rover.steer = np.clip(np.max(Rover.nav_angles * 180/np.pi), 40, 80)
             elif len(Rover.nav_angles) >= Rover.stop_forward: 
                 # If mode is forward, navigable terrain looks good 
