@@ -200,6 +200,23 @@ def decision_step(Rover):
                 Rover.mode = 'forward'
                 Rover.stuck_time = Rover.total_time
 
+        #goingHome        
+        elif Rover.mode == "goingHome":
+            Rover.steer = (Rover.anglesToStart * 180/np.pi)
+            if(Rover.distanceToStart<5): #reached desitanation
+                Rover.mode="finished"            
+            else:
+                Rover.mode = "forward"
+            
+        #finished        
+        elif Rover.mode =="finished":
+            print("finished and returned to origin")
+            Rover.throttle =0
+            Rover.brake=Rover.brake_set
+            Rover.steer=0
+            print("distanceToHome->",Rover.distanceToStart)
+    
+
     # Just to make the rover do something 
     # even if no modifications have been made to the code
     else:
