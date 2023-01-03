@@ -15,7 +15,7 @@ def decision_step(Rover):
         # Check for Rover.mode status
         if Rover.mode == 'forward': 
             # Check the extent of navigable terrain
-            if Rover.vel <= 0.1 and Rover.total_time - Rover.stuck_time > 4:
+            if Rover.vel <= 0.1 and Rover.total_time - Rover.stuck_time > 5:
                 # Set mode to "stuck" and hit the brakes!
                 Rover.throttle = 0
                 # Set brake to stored brake value
@@ -26,10 +26,10 @@ def decision_step(Rover):
                 Rover.stuck_time = Rover.total_time
             else:
                 Rover.stuck=False
-            print("Rover.stuck_count in forward: ",Rover.stuck_count)
+
             if(Rover.stuck_pos is not None):
                 distanceMoved=np.sqrt( (Rover.stuck_pos[0]-Rover.pos[0])**2 + (Rover.stuck_pos[1]-Rover.pos[1])**2 )
-                if(Rover.stuck==True and (distanceMoved <2)): #accepted range 
+                if(Rover.stuck==True and (distanceMoved <0.5)): #accepted range
                     Rover.stuck_count+=1
                 elif(Rover.stuck==True):#stuck again but not in same position
                     Rover.stuck_count=0
@@ -48,8 +48,7 @@ def decision_step(Rover):
                 else: # Else coast
                     Rover.throttle = 0
                 Rover.brake = 0
-                print("Rover.map distance") #checking the distance value bs
-                print(np.min(Rover.nav_distrock))
+
                 if(np.min(Rover.nav_distrock) !=None):
                     Rover.mode = 'rockFound'
                     
@@ -73,13 +72,13 @@ def decision_step(Rover):
                 Rover.stuck_time=Rover.total_time
                 Rover.stuck=True
                 Rover.mode="stuck"
+                Rover.stuck_time = Rover.total_time
             else:
                 Rover.stuck=False
-            print("Rover.stuck_count in stop",Rover.stuck_count)
             if(Rover.stuck_pos is not None):
                 distanceMoved=np.sqrt( (Rover.stuck_pos[0]-Rover.pos[0])**2 + (Rover.stuck_pos[1]-Rover.pos[1])**2 )
 
-                if(Rover.stuck==True and (distanceMoved <2)): #accepted range 
+                if(Rover.stuck==True and (distanceMoved <0.5)): #accepted range
                     Rover.stuck_count += 1
                 elif(Rover.stuck==True):#stuck again but not in same position
                     Rover.stuck_count=0
@@ -118,7 +117,7 @@ def decision_step(Rover):
             if(Rover.stuck_count == 0):
                 Rover.stuck_pos=Rover.pos
             #(np.mean(Rover.nav_angles)>=0.5 or np.mean(Rover.nav_angles)<=-0.5) the navigable train is not in the middle
-            if(Rover.stuck_count>5):
+            if(Rover.stuck_count>=2):
                 Rover.mode="backward"
             elif (Rover.stuck_count>1 or (np.mean(Rover.nav_angles)>=0.5 or np.mean(Rover.nav_angles)<=-0.5)):
  
@@ -143,7 +142,7 @@ def decision_step(Rover):
             
         elif Rover.mode == 'rockFound':
             Rover.steer = np.clip(np.mean(Rover.nav_anglesrock * 180/np.pi), -50, 50)
-            print("found rock")
+
             if(np.min(Rover.nav_distrock)!=None and np.min(Rover.nav_distrock)<25):
                 Rover.throttle = 0
                 # Set brake to stored brake value
@@ -151,14 +150,7 @@ def decision_step(Rover):
                 Rover.steer = 0
                 Rover.picking=True
                 Rover.mode = 'collectingRock'
-            elif(np.min(Rover.nav_distrock) is None and (len(Rover.nav_angles) < Rover.go_forward)):
-                Rover.mode='backward'
-            elif(np.mean(Rover.nav_angles)>=0.5):
-                Rover.steer=-10
-                Rover.mode='forward'
-            elif(np.mean(Rover.nav_angles)<=-0.5):
-                Rover.steer= +10
-                Rover.mode='forward'
+
             else:
                 Rover.mode='forward'
                 
@@ -170,10 +162,19 @@ def decision_step(Rover):
                 Rover.mode = 'forward'
                 
         elif Rover.mode == 'backward':
-            Rover.throttle = -0.1
+            Rover.throttle = 0
             Rover.brake=0
-            Rover.picking = False
-            if(Rover.vel < -0.2):
+            Rover.steer = 0
+            Rover.throttle = -0.1
+            
+            if(Rover.vel < -0.3 and Rover.stuck_count >=2 and Rover.picking == False):#entering from stuck
+                Rover.throttle = 0
+                Rover.brake = Rover.brake_set
+                Rover.brake = 0
+                Rover.steer = -15
+                Rover.mode = 'forward'
+            elif(Rover.vel < -0.3 and Rover.picking == True): #entering from collectingrRock
+                Rover.picking = False
                 Rover.mode = 'stop'
 
     # Just to make the rover do something 
