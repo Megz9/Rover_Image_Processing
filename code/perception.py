@@ -150,7 +150,7 @@ def perception_step(Rover):
         Rover.worldmap[y_world_goodfidlity, x_world_goodfidlity, 2] = 255
     
     # 8) Convert rover-centric pixel positions to polar coordinates
-    dist, angles = to_polar_coords(xpix, ypix)
+    dist, angles = to_polar_coords(xpix_goodfidlity, ypix_goodfidlity)
 
     # Update Rover pixel distances and angles
     # Rover.nav_dists = rover_centric_pixel_distances
@@ -178,7 +178,7 @@ def perception_step(Rover):
         Rover.nav_distrock=None
 
     
-    obsDist, obsAngles = to_polar_coords(obsx, obsy)
+    obsDist, obsAngles = to_polar_coords(obsx_goodfidlity, obsy_goodfility)
     Rover.obs_angles=obsAngles
     Rover.obs_dist=obsDist   
     

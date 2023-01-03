@@ -159,6 +159,8 @@ def create_output_images(Rover):
     buff = BytesIO()
     pil_img.save(buff, format="JPEG")
     encoded_string2 = base64.b64encode(buff.getvalue()).decode("utf-8")
-    if(perc_mapped>=95):
+
+    
+    if(fidelity>=60 and perc_mapped>=95):
         Rover.finished=True
     return encoded_string1, encoded_string2

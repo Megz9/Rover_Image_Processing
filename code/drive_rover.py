@@ -68,11 +68,11 @@ class RoverState():
         # Image output from perception step
         # Update this image to display your intermediate analysis steps
         # on screen in autonomous mode
-        self.vision_image = np.zeros((160, 320, 3), dtype=np.float)
+        self.vision_image = np.zeros((160, 320, 3), dtype=np.float) 
         # Worldmap
         # Update this image with the positions of navigable terrain
         # obstacles and rock samples
-        self.worldmap = np.zeros((200, 200, 3), dtype=np.float)
+        self.worldmap = np.zeros((200, 200, 3), dtype=np.float) 
         self.samples_pos = None # To store the actual sample positions
         self.samples_to_find = 0 # To store the initial count of samples
         self.samples_located = 0 # To store number of samples located on map
@@ -89,9 +89,10 @@ class RoverState():
         self.stuck_pos=None #to know the stuck position of the rover to increment counter if stuck again
         self.obs_angle = None
         self.obs_dist = None
-        self.finished =False  #flag set to  true only when mapping and fidelty are achieved to return to original position
+        self.finished =False  #flag set to  true only when mapping and fidelty are achieved to return to original position 
         self.distanceToStart=None #to calc the distance to start
         self.anglesToStart=None
+        
 # Initialize our rover 
 Rover = RoverState()
 
@@ -228,3 +229,4 @@ if __name__ == '__main__':
     # deploy as an eventlet WSGI server
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
     Rover.nav_distrock=None
+
