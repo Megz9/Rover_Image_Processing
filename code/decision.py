@@ -120,7 +120,7 @@ def decision_step(Rover):
                 if ((len(Rover.nav_angles) >= Rover.go_forward) and not Rover.near_sample):
                     if(np.mean(Rover.nav_angles)<=0.5 and np.mean(Rover.nav_angles)>=-0.5):
                         # Set throttle back to stored valu
-                         Rover.throttle = Rover.throttle_set
+                        Rover.throttle = Rover.throttle_set
                         # Release the brake
                         Rover.brake = 0
                         # Set steer to mean angle
