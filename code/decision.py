@@ -50,7 +50,15 @@ def decision_step(Rover):
                 Rover.brake = 0
 
                 if(np.min(Rover.nav_distrock) !=None):
+                    if(Rover.vel>=1):
+                        Rover.throttle=0
+                        Rover.brake=Rover.brake_set/2
                     Rover.mode = 'rockFound'
+                #avg obstacle and avg terrain aproximately equal and very near to obstacle
+                elif(Rover.obs_dist is not None and np.min(Rover.obs_dist) <2):
+                    Rover.throttle=0
+                    Rover.brake=Rover.brake_set
+                    Rover.steer= 15
                     
                 else:
                 # Set steering to average angle clipped to the range +/- 15
@@ -154,7 +162,7 @@ def decision_step(Rover):
             
         elif Rover.mode == 'rockFound':
             Rover.steer = np.clip(np.mean(Rover.nav_anglesrock * 180/np.pi), -50, 50)
-
+            throttle=0
             if(np.min(Rover.nav_distrock)!=None and np.min(Rover.nav_distrock)<25):
                 Rover.throttle = 0
                 # Set brake to stored brake value
@@ -188,6 +196,9 @@ def decision_step(Rover):
             elif(Rover.vel < -0.3 and Rover.picking == True): #entering from collectingrRock
                 Rover.picking = False
                 Rover.mode = 'stop'
+            elif(Rover.total_time - Rover.stuck_time > 5):  #if stuck in backwards for more than 5 secs
+                Rover.mode = 'forward'
+                Rover.stuck_time = Rover.total_time
 
     # Just to make the rover do something 
     # even if no modifications have been made to the code

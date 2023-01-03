@@ -43,6 +43,7 @@ class RoverState():
         self.stuck_time = 0 # To record total duration of naviagation
         self.img = None # Current camera image
         self.pos = None # Current position (x, y)
+        self.start_pos=None #starting position(x,y)
         self.yaw = None # Current yaw angle
         self.pitch = None # Current pitch angle
         self.roll = None # Current roll angle
@@ -61,16 +62,17 @@ class RoverState():
         # when you can keep going and when you should stop.  Feel free to
         # get creative in adding new fields or modifying these!
         self.stop_forward = 50 # Threshold to initiate stopping
-        self.go_forward = 500 # Threshold to go forward again
+        self.go_forward = 100 # Threshold to go forward again
+        
         self.max_vel = 2 # Maximum velocity (meters/second)
         # Image output from perception step
         # Update this image to display your intermediate analysis steps
         # on screen in autonomous mode
-        self.vision_image = np.zeros((160, 320, 3), dtype=np.float) 
+        self.vision_image = np.zeros((160, 320, 3), dtype=np.float)
         # Worldmap
         # Update this image with the positions of navigable terrain
         # obstacles and rock samples
-        self.worldmap = np.zeros((200, 200, 3), dtype=np.float) 
+        self.worldmap = np.zeros((200, 200, 3), dtype=np.float)
         self.samples_pos = None # To store the actual sample positions
         self.samples_to_find = 0 # To store the initial count of samples
         self.samples_located = 0 # To store number of samples located on map
@@ -78,14 +80,18 @@ class RoverState():
         self.near_sample = 0 # Will be set to telemetry value data["near_sample"]
         self.picking_up = 0 # Will be set to telemetry value data["picking_up"]
         self.send_pickup = False # Set to True to trigger rock pickup
-        self.picking = None #flag to know if the rover is picking a rock
+        self.nav_anglesrock = None
+        self.nav_distrock = None
+        
+        self.picking=None  #flag to know if the rover is picking a rock
         self.stuck=None #flag to know if the rover was stuck
         self.stuck_count=0 #counter to check if entered stuck from same position more than once
         self.stuck_pos=None #to know the stuck position of the rover to increment counter if stuck again
         self.obs_angle = None
         self.obs_dist = None
-        self.nav_anglesrock = None
-        self.nav_distrock = None
+        self.finished =False  #flag set to  true only when mapping and fidelty are achieved to return to original position
+        self.distanceToStart=None #to calc the distance to start
+        self.anglesToStart=None
 # Initialize our rover 
 Rover = RoverState()
 
@@ -192,6 +198,7 @@ def send_pickup():
         pickup,
         skip_sid=True)
     eventlet.sleep(0)
+    Rover.stuck_time = Rover.total_time
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote Driving')
     parser.add_argument(
